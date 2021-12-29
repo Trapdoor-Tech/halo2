@@ -35,7 +35,8 @@ impl<C: ColumnType> Column<C> {
         self.index
     }
 
-    pub(crate) fn column_type(&self) -> &C {
+    /// return column's type
+    pub fn column_type(&self) -> &C {
         &self.column_type
     }
 }
