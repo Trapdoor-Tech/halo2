@@ -31,7 +31,8 @@ impl<C: ColumnType> Column<C> {
         Column { index, column_type }
     }
 
-    pub(crate) fn index(&self) -> usize {
+    /// return column's index
+    pub fn index(&self) -> usize {
         self.index
     }
 
