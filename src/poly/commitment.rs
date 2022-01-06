@@ -286,6 +286,11 @@ impl<E: Engine> ParamsVerifier<E> {
             g_lagrange,
         })
     }
+
+    /// Getter for g generators
+    pub fn get_n(&self) -> usize {
+        self.n as usize
+    }
 }
 
 /// Wrapper type around a blinding factor.

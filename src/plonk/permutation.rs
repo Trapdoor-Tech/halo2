@@ -73,8 +73,8 @@ impl Argument {
 }
 
 /// The verifying key for a single permutation argument.
-#[derive(Debug)]
-pub(crate) struct VerifyingKey<C: CurveAffine> {
+#[derive(Debug, Clone)]
+pub struct VerifyingKey<C: CurveAffine> {
     commitments: Vec<C>,
 }
 
@@ -92,6 +92,10 @@ impl<C: CurveAffine> VerifyingKey<C> {
             .map(|_| C::read(reader))
             .collect::<Result<Vec<_>, _>>()?;
         Ok(VerifyingKey { commitments })
+    }
+
+    pub fn get_perm_column_num(&self) -> usize {
+        self.commitments.len()
     }
 }
 
