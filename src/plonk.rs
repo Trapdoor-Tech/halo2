@@ -11,7 +11,7 @@ use crate::arithmetic::{BaseExt, CurveAffine, FieldExt};
 use crate::helpers::CurveRead;
 use crate::poly::{
     commitment::Params, Coeff, EvaluationDomain, ExtendedLagrangeCoeff, LagrangeCoeff,
-    PinnedEvaluationDomain, Polynomial,
+    PinnedEvaluationDomain, Polynomial, Rotation,
 };
 use crate::transcript::{ChallengeScalar, EncodedChallenge, Transcript};
 
@@ -44,6 +44,53 @@ pub struct VerifyingKey<C: CurveAffine> {
 }
 
 impl<C: CurveAffine> VerifyingKey<C> {
+    /// return cs
+    pub fn cs(&self) -> ConstraintSystem<C::Scalar> {
+        self.cs.clone()
+    }
+
+    /// return gates
+    pub fn gates(&self) -> Vec<Expression<C::ScalarExt>> {
+        self.cs
+            .gates
+            .clone()
+            .into_iter()
+            .flat_map(|gate| gate.polynomials().to_vec())
+            .collect()
+    }
+
+    /// return perm
+    pub fn permutation_columns(&self) -> Vec<(Column<Any>, usize)> {
+        self.cs
+            .permutation
+            .get_columns()
+            .into_iter()
+            .map(|column| (column, self.cs.get_any_query_index(column, Rotation::cur())))
+            .collect()
+    }
+
+    /// return
+    pub fn instance_queries(&self) -> Vec<(Column<Instance>, Rotation)> {
+        self.cs.instance_queries.clone()
+    }
+
+    /// return
+    pub fn advice_queries(&self) -> Vec<(Column<Advice>, Rotation)> {
+        self.cs.advice_queries.clone()
+    }
+
+    /// return
+    pub fn fixed_queries(&self) -> Vec<(Column<Fixed>, Rotation)> {
+        self.cs.fixed_queries.clone()
+    }
+    /// return fixed commitments
+    pub fn fixed_commitments(&self) -> Vec<C> {
+        self.fixed_commitments.clone()
+    }
+    /// return permutation vk
+    pub fn permutation(&self) -> permutation::VerifyingKey<C> {
+        self.permutation.clone()
+    }
     /// Writes a verifying key to a buffer.
     pub fn write<W: io::Write>(&self, writer: &mut W) -> io::Result<()> {
         for commitment in &self.fixed_commitments {

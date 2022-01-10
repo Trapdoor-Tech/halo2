@@ -67,14 +67,14 @@ impl Argument {
         }
     }
 
-    pub(crate) fn get_columns(&self) -> Vec<Column<Any>> {
+    pub fn get_columns(&self) -> Vec<Column<Any>> {
         self.columns.clone()
     }
 }
 
 /// The verifying key for a single permutation argument.
-#[derive(Debug)]
-pub(crate) struct VerifyingKey<C: CurveAffine> {
+#[derive(Clone, Debug)]
+pub struct VerifyingKey<C: CurveAffine> {
     commitments: Vec<C>,
 }
 
@@ -92,6 +92,11 @@ impl<C: CurveAffine> VerifyingKey<C> {
             .map(|_| C::read(reader))
             .collect::<Result<Vec<_>, _>>()?;
         Ok(VerifyingKey { commitments })
+    }
+
+    /// return num of perm columns
+    pub fn get_perm_column_num(&self) -> usize {
+        self.commitments.len()
     }
 }
 

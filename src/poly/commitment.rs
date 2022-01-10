@@ -222,6 +222,11 @@ impl<C: CurveAffine> Params<C> {
 }
 
 impl<E: Engine> ParamsVerifier<E> {
+    /// returns n
+    pub fn get_n(&self) -> usize {
+        self.n as usize
+    }
+
     /// Returns maximum public input size allowed
     pub fn public_inputs_size(&self) -> usize {
         self.g_lagrange.len()

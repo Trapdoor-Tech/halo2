@@ -1027,6 +1027,18 @@ impl<F: Field> Default for ConstraintSystem<F> {
 }
 
 impl<F: Field> ConstraintSystem<F> {
+    /// return lookup arguments
+    pub fn lookups(&self) -> Vec<lookup::Argument<F>> {
+        self.lookups.clone()
+    }
+    /// return num_advice_columns
+    pub fn num_advice_columns(&self) -> usize {
+        self.num_advice_columns
+    }
+    /// return num_fixed_columns
+    pub fn num_fixed_columns(&self) -> usize {
+        self.num_fixed_columns
+    }
     /// Obtain a pinned version of this constraint system; a structure with the
     /// minimal parameters needed to determine the rest of the constraint
     /// system.
