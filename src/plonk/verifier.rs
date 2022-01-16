@@ -27,7 +27,7 @@ pub fn verify_proof<
     vk: &VerifyingKey<C::G1Affine>,
     instances: &[&[&[C::Scalar]]],
     transcript: &mut T,
-) -> Result<Choice, Error> {
+) -> Result<(Choice, Vec<C::G1Affine>), Error> {
     // Check that instances matches the expected number of instance columns
     for instances in instances.iter() {
         if instances.len() != vk.cs.num_instance_columns {

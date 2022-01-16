@@ -29,7 +29,7 @@ pub fn verify_proof<
     params: &'params ParamsVerifier<C>,
     transcript: &mut T,
     queries: I,
-) -> Result<Choice, Error>
+) -> Result<(Choice, Vec<C::G1Affine>), Error>
 where
     I: IntoIterator<Item = VerifierQuery<'r, C::G1Affine>> + Clone,
 {
@@ -96,9 +96,9 @@ where
     let term_1 = (&w.into(), &s_g2_prepared);
     let term_2 = (&(zw + e + f).into(), &n_g2_prepared);
 
-    Ok(C::multi_miller_loop(&[term_1, term_2])
+    Ok((C::multi_miller_loop(&[term_1, term_2])
         .final_exponentiation()
-        .is_identity())
+        .is_identity(), vec![e, f, w, zw]))
 }
 
 #[doc(hidden)]

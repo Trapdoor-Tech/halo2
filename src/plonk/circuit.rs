@@ -1035,6 +1035,10 @@ impl<F: Field> ConstraintSystem<F> {
     pub fn num_advice_columns(&self) -> usize {
         self.num_advice_columns
     }
+    /// return num_instance_columns
+    pub fn num_instance_columns(&self) -> usize {
+        self.num_instance_columns
+    }
     /// return num_fixed_columns
     pub fn num_fixed_columns(&self) -> usize {
         self.num_fixed_columns
