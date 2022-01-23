@@ -4,6 +4,7 @@ use super::{
 };
 use crate::arithmetic::CurveAffine;
 use crate::poly::commitment::ParamsVerifier;
+use crate::poly::{EvaluationDomain, Rotation};
 use crate::transcript::{EncodedChallenge, TranscriptRead};
 use ff::Field;
 use group::Group;
@@ -27,6 +28,8 @@ pub fn verify_proof<
     T: TranscriptRead<C::G1Affine, E>,
 >(
     params: &'params ParamsVerifier<C>,
+    domain: &EvaluationDomain<C::Scalar>,
+    x: C::Scalar,
     transcript: &mut T,
     queries: I,
 ) -> Result<(Choice, Vec<C::G1Affine>), Error>
@@ -46,7 +49,8 @@ where
 
     for commitment_at_a_point in commitment_data.iter() {
         assert!(commitment_at_a_point.queries.len() > 0);
-        let z = commitment_at_a_point.point;
+        let rot = commitment_at_a_point.rot;
+        let z = domain.rotate_omega(x, rot);
 
         let wi = transcript.read_point().map_err(|_| Error::SamplingError)?;
 
@@ -61,10 +65,10 @@ where
         let mut eval_batch = C::Scalar::zero();
 
         for query in commitment_at_a_point.queries.iter() {
-            assert_eq!(query.get_point(), z);
+            assert_eq!(query.get_rot(), rot);
 
             let commitment = query.get_commitment();
-            let eval = query.get_eval();
+            let eval = query.get_eval(z);
 
             commitment_batch.scale(*v);
             // let a = commitment
@@ -96,9 +100,12 @@ where
     let term_1 = (&w.into(), &s_g2_prepared);
     let term_2 = (&(zw + e + f).into(), &n_g2_prepared);
 
-    Ok((C::multi_miller_loop(&[term_1, term_2])
-        .final_exponentiation()
-        .is_identity(), vec![e, f, w, zw]))
+    Ok((
+        C::multi_miller_loop(&[term_1, term_2])
+            .final_exponentiation()
+            .is_identity(),
+        vec![e, f, w, zw],
+    ))
 }
 
 #[doc(hidden)]
@@ -116,10 +123,13 @@ impl<'a, C: CurveAffine> Query<C::Scalar> for VerifierQuery<'a, C> {
     // type Eval = C::Scalar;
     type Scalar = C::Scalar;
 
-    fn get_point(&self) -> C::Scalar {
-        self.point
+    // fn get_point(&self) -> C::Scalar {
+    //     self.point
+    // }
+    fn get_rot(&self) -> Rotation {
+        self.rot
     }
-    fn get_eval(&self) -> C::Scalar {
+    fn get_eval(&self, _point: C::Scalar) -> C::Scalar {
         self.eval
     }
     fn get_commitment(&self) -> Self::Commitment {

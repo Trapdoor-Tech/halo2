@@ -30,8 +30,8 @@ type ChallengeV<F> = ChallengeScalar<F, V>;
 /// A polynomial query at a point
 #[derive(Debug, Clone, Copy)]
 pub struct ProverQuery<'a, C: CurveAffine> {
-    /// point at which polynomial is queried
-    pub point: C::Scalar,
+    /// rotation at which polynomial is queried
+    pub rot: Rotation,
     /// coefficients of polynomial
     pub poly: &'a Polynomial<C::Scalar, Coeff>,
 }
@@ -39,8 +39,8 @@ pub struct ProverQuery<'a, C: CurveAffine> {
 /// A polynomial query at a point
 #[derive(Debug, Clone, Copy)]
 pub struct VerifierQuery<'r, C: CurveAffine> {
-    /// point at which polynomial is queried
-    point: C::Scalar,
+    /// rotation at which polynomial is queried
+    rot: Rotation,
     /// commitment to polynomial
     commitment: CommitmentReference<'r, C>,
     /// evaluation of polynomial at query point
@@ -49,18 +49,18 @@ pub struct VerifierQuery<'r, C: CurveAffine> {
 
 impl<'r, 'params: 'r, C: CurveAffine> VerifierQuery<'r, C> {
     /// Create a new verifier query based on a commitment
-    pub fn new_commitment(commitment: &'r C, point: C::Scalar, eval: C::Scalar) -> Self {
+    pub fn new_commitment(commitment: &'r C, rot: Rotation, eval: C::Scalar) -> Self {
         VerifierQuery {
-            point,
+            rot,
             eval,
             commitment: CommitmentReference::Commitment(commitment),
         }
     }
 
     /// Create a new verifier query based on a linear combination of commitments
-    pub fn new_msm(msm: &'r MSM<C>, point: C::Scalar, eval: C::Scalar) -> Self {
+    pub fn new_msm(msm: &'r MSM<C>, rot: Rotation, eval: C::Scalar) -> Self {
         VerifierQuery {
-            point,
+            rot,
             eval,
             commitment: CommitmentReference::MSM(msm),
         }
@@ -87,7 +87,7 @@ impl<'r, 'params: 'r, C: CurveAffine> PartialEq for CommitmentReference<'r, C> {
 
 struct CommitmentData<F, Q: Query<F>> {
     queries: Vec<Q>,
-    point: Q::Scalar,
+    rot: Rotation,
     _marker: PhantomData<F>,
 }
 
@@ -95,8 +95,8 @@ trait Query<F>: Sized + Copy {
     type Commitment: PartialEq + Copy;
     type Scalar: Clone + Default + Ord + Copy;
 
-    fn get_point(&self) -> Self::Scalar;
-    fn get_eval(&self) -> Self::Scalar;
+    fn get_rot(&self) -> Rotation;
+    fn get_eval(&self, point: Self::Scalar) -> Self::Scalar;
     fn get_commitment(&self) -> Self::Commitment;
 }
 
@@ -104,22 +104,22 @@ fn construct_intermediate_sets<F: FieldExt, I, Q: Query<F>>(queries: I) -> Vec<C
 where
     I: IntoIterator<Item = Q> + Clone,
 {
-    let mut point_query_map: BTreeMap<Q::Scalar, Vec<Q>> = BTreeMap::new();
+    let mut point_query_map: BTreeMap<Rotation, Vec<Q>> = BTreeMap::new();
     for query in queries.clone() {
-        if let Some(queries) = point_query_map.get_mut(&query.get_point()) {
+        if let Some(queries) = point_query_map.get_mut(&query.get_rot()) {
             queries.push(query);
         } else {
-            point_query_map.insert(query.get_point(), vec![query]);
+            point_query_map.insert(query.get_rot(), vec![query]);
         }
     }
 
     point_query_map
         .keys()
-        .map(|point| {
-            let queries = point_query_map.get(point).unwrap();
+        .map(|rot| {
+            let queries = point_query_map.get(rot).unwrap();
             CommitmentData {
                 queries: queries.clone(),
-                point: point.clone(),
+                rot: rot.clone(),
                 _marker: PhantomData,
             }
         })
