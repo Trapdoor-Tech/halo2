@@ -98,6 +98,10 @@ impl<C: CurveAffine> VerifyingKey<C> {
     pub fn get_perm_column_num(&self) -> usize {
         self.commitments.len()
     }
+
+    pub fn get_perm_common_commitments(&self) -> Vec<C> {
+        self.commitments.clone()
+    }
 }
 
 /// The proving key for a single permutation argument.
